@@ -26,14 +26,14 @@ int main(int argc,char *argv[]){
     return 0;
 }
 
-int SendPing(int *sock,char host){
+int SendPing(int *sock,char *host){
     struct icmphdr header;
     struct sockaddr_in addr;
     int result;
     memset(&header,0,sizeof(header));
 
     addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = inet_addr("192.168.50.112");
+    addr.sin_addr.s_addr = inet_addr(host);
 
     header.type = ICMP_ECHO;
     header.code = 0;
@@ -43,7 +43,7 @@ int SendPing(int *sock,char host){
 
     header.checksum = GetChecksum((unsigned short*)&header,sizeof(header));
     
-    result = sendto(*sock,&header,sizeof(header),0,&addr,sizeof(addr));
+    result = sendto(*sock,&header,sizeof(header),0,(struct sockaddr *)&addr,sizeof(addr));
     if(result < 1){
         perror("send");
         return -1;
