@@ -10,6 +10,12 @@
 
 #include "main.h"
 
+#define ECHO_HEADER_SIZE 8
+#define PACKET_SIZE 64
+
+
+
+
 int main(int argc,char *argv[]){
     int sock;
     int status;
@@ -27,23 +33,36 @@ int main(int argc,char *argv[]){
 }
 
 int SendPing(int *sock,char *host){
-    struct icmphdr header;
+    struct icmphdr *header;
     struct sockaddr_in addr;
-    int result;
-    memset(&header,0,sizeof(header));
+    char buff[1500];
+    unsigned char *ptr;
+    int result = 0;
+    int datasize = PACKET_SIZE;
 
+    unsigned char data[] = "tekusiba kawaii";
+    memset(&buff,0,sizeof(buff));
+    
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = inet_addr(host);
-
-    header.type = ICMP_ECHO;
-    header.code = 0;
-    header.checksum = 0;
-    header.un.echo.id = 0;
-    header.un.echo.sequence = 0;
-
-    header.checksum = GetChecksum((unsigned short*)&header,sizeof(header));
     
-    result = sendto(*sock,&header,sizeof(header),0,(struct sockaddr *)&addr,sizeof(addr));
+    header = (struct icmphdr *)buff;
+    header->type = ICMP_ECHO;
+    header->code = 0;
+    header->checksum = 0;
+    header->un.echo.id = 0;
+    header->un.echo.sequence = 0;
+
+    ptr = (unsigned char *)&buff[ECHO_HEADER_SIZE];
+    datasize = PACKET_SIZE - ECHO_HEADER_SIZE;
+    for(;datasize;datasize--){
+        *ptr++=(unsigned char)0xA5;
+    }
+    ptr = (unsigned char *)&buff[ECHO_HEADER_SIZE];
+    memcpy(ptr,&data,sizeof(data));
+    header->checksum = GetChecksum((unsigned short*)header,PACKET_SIZE);
+    
+    result = sendto(*sock,header,PACKET_SIZE,0,(struct sockaddr *)&addr,sizeof(addr));
     if(result < 1){
         perror("send");
         return -1;
