@@ -1,5 +1,6 @@
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -66,6 +67,27 @@ int SendPing(int *sock,char *host){
     if(result < 1){
         perror("send");
         return -1;
+    }
+    return 0;
+}
+
+int RecvPing(int *sock){
+    struct iphdr *iphdrptr;
+    struct icmphdr *header;
+    char buff[BUFFERSIZE];
+    int n;
+    memset(&buff,0,sizeof(buff));
+
+    n = recv(*sock,buff,sizeof(buff),0);
+
+    if(n<1){
+        perror("recv");
+    }
+
+    iphdrptr = (struct iphdr *)buff;
+    header = (struct icmphdr *)(buff + (iphdrptr->ihl * 4));
+    if(iphdrptr->protocol == IPPROTO_ICMP){
+
     }
     return 0;
 }
