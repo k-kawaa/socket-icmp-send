@@ -29,6 +29,7 @@ int main(int argc,char *argv[]){
     }
 
     status = SendPing(&sock,argv[1]);
+    RecvPing(&sock);
     close(sock);
     return 0;
 }
@@ -73,7 +74,7 @@ int SendPing(int *sock,char *host){
 
 int RecvPing(int *sock){
     struct iphdr *iphdrptr;
-    struct icmphdr *header;
+    struct icmphdr *icmpheaderptr;
     char buff[BUFFERSIZE];
     int n;
     memset(&buff,0,sizeof(buff));
@@ -85,9 +86,19 @@ int RecvPing(int *sock){
     }
 
     iphdrptr = (struct iphdr *)buff;
-    header = (struct icmphdr *)(buff + (iphdrptr->ihl * 4));
     if(iphdrptr->protocol == IPPROTO_ICMP){
-
+        //IPヘッダ長を4で割った数が32bit wordで表現されて格納されている。よって4倍する。IPヘッダオプションがない時は20byte.
+        icmpheaderptr = (struct icmphdr *)(buff + (iphdrptr->ihl * 4));
+        switch (icmpheaderptr->type)
+        {
+        case ICMP_ECHOREPLY:
+            printf("received ICMP_ECHOREPLY\n");
+            break;
+        
+        default:
+            printf("other type ICMP packet received.\n");
+            break;
+        }
     }
     return 0;
 }
